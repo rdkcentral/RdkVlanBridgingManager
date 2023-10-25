@@ -126,6 +126,37 @@ static INT EthLink_BridgeNfDisable( const char* bridgeName, bridge_nf_table_t ta
 #endif
 /* *************************************************************************************************** */
 
+static int sysctl_iface_set(const char *path, const char *ifname, const char *content)
+{
+    char buf[128];
+    char *filename;
+    size_t len;
+    int fd;
+
+    if (ifname) {
+        snprintf(buf, sizeof(buf), path, ifname);
+        filename = buf;
+    }
+    else
+        filename = path;
+
+    if ((fd = open(filename, O_WRONLY)) < 0) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    len = strlen(content);
+    if (write(fd, content, len) != (ssize_t) len) {
+        perror("Failed to write to file");
+        close(fd);
+        return -1;
+    }
+
+    close(fd);
+
+    return 0;
+}
+
 /* * EthLink_SyseventInit() */
 static int EthLink_SyseventInit( void )
 {
@@ -1397,13 +1428,13 @@ static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
             v_secure_system("ifconfig %s down",pCfg->ethwan_ifname);
             v_secure_system("ip addr flush dev %s",pCfg->ethwan_ifname);
             v_secure_system("ip -6 addr flush dev %s",pCfg->ethwan_ifname);
-            v_secure_system("sysctl -w net.ipv6.conf.%s.accept_ra=0",pCfg->ethwan_ifname);
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra", pCfg->ethwan_ifname, "0");
             v_secure_system("ifconfig %s down; ip link set %s name dummy-rf", pCfg->wanPhyName,pCfg->wanPhyName);
 
             v_secure_system("brctl addbr %s", pCfg->wanPhyName);
             v_secure_system("brctl addif %s %s", pCfg->wanPhyName,pCfg->ethwan_ifname);
-            v_secure_system("sysctl -w net.ipv6.conf.%s.autoconf=0", pCfg->ethwan_ifname);
-            v_secure_system("sysctl -w net.ipv6.conf.%s.disable_ipv6=1", pCfg->ethwan_ifname);
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", pCfg->ethwan_ifname, "0");
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", pCfg->ethwan_ifname, "1");
             v_secure_system("ip6tables -I OUTPUT -o %s -p icmpv6 -j DROP", pCfg->ethwan_ifname);
             if (0 != pCfg->bridgemode)
             {
@@ -1416,7 +1447,7 @@ static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
 
             v_secure_system("ip link set %s up",ETHWAN_DOCSIS_INF_NAME);
             v_secure_system("brctl addif %s %s", pCfg->wanPhyName,ETHWAN_DOCSIS_INF_NAME);
-            v_secure_system("sysctl -w net.ipv6.conf.%s.disable_ipv6=1",ETHWAN_DOCSIS_INF_NAME);
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", ETHWAN_DOCSIS_INF_NAME, "1");
 
             memset(&macAddr,0,sizeof(macaddr_t));
             EthLink_GetInterfaceMacAddress(&macAddr,"dummy-rf"); //dummy-rf is renamed from erouter0
@@ -1499,7 +1530,7 @@ static INT EthLink_Hal_BridgeConfigBcm(WAN_MODE_BRIDGECFG *pCfg)
             v_secure_system("ifconfig %s down",pCfg->ethwan_ifname);
             v_secure_system("ip addr flush dev %s",pCfg->ethwan_ifname);
             v_secure_system("ip -6 addr flush dev %s",pCfg->ethwan_ifname);
-            v_secure_system("sysctl -w net.ipv6.conf.%s.accept_ra=0",pCfg->ethwan_ifname);
+            sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/accept_ra", pCfg->ethwan_ifname, "0");
 
             if (0 == pCfg->bridgemode)
             {
@@ -1508,13 +1539,13 @@ static INT EthLink_Hal_BridgeConfigBcm(WAN_MODE_BRIDGECFG *pCfg)
                 v_secure_system("ip link set %s name %s", pCfg->wanPhyName,ETHWAN_DOCSIS_INF_NAME);
                 v_secure_system("brctl addbr %s", pCfg->wanPhyName);
                 v_secure_system("brctl addif %s %s", pCfg->wanPhyName,pCfg->ethwan_ifname);
+                sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/autoconf", pCfg->ethwan_ifname, "0");
+                sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", pCfg->ethwan_ifname, "1");
 
-                v_secure_system("sysctl -w net.ipv6.conf.%s.autoconf=0", pCfg->ethwan_ifname);
-                v_secure_system("sysctl -w net.ipv6.conf.%s.disable_ipv6=1", pCfg->ethwan_ifname);
                 v_secure_system("ip6tables -I OUTPUT -o %s -p icmpv6 -j DROP", pCfg->ethwan_ifname);
                 v_secure_system("ip link set %s up",ETHWAN_DOCSIS_INF_NAME);
                 v_secure_system("brctl addif %s %s", pCfg->wanPhyName,ETHWAN_DOCSIS_INF_NAME);
-                v_secure_system("sysctl -w net.ipv6.conf.%s.disable_ipv6=1",ETHWAN_DOCSIS_INF_NAME);
+                sysctl_iface_set("/proc/sys/net/ipv6/conf/%s/disable_ipv6", ETHWAN_DOCSIS_INF_NAME, "1");
             }
             else
             {
