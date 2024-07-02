@@ -64,6 +64,9 @@
 **********************************************************************/
 
 #include "plugin_main_apis.h"
+#include "vlan_internal.h"
+#include "ethernet_internal.h"
+#include "ccsp_psm_helper.h"
 
 /*PCOSA_DIAG_PLUGIN_INFO             g_pCosaDiagPluginInfo;*/
 COSAGetParamValueByPathNameProc    g_GetParamValueByPathNameProc;
@@ -117,7 +120,6 @@ BackEndManagerCreate
         VOID
     )
 {
-    ANSC_STATUS                returnStatus = ANSC_STATUS_SUCCESS;
     PBACKEND_MANAGER_OBJECT    pMyObject    = (PBACKEND_MANAGER_OBJECT)NULL;
 
     /*
