@@ -69,7 +69,6 @@ EthernetCreate
         VOID
     )
 {
-    ANSC_STATUS                returnStatus = ANSC_STATUS_SUCCESS;
     PDATAMODEL_ETHERNET        pMyObject    = (PDATAMODEL_ETHERNET) NULL;
 
     /*
@@ -148,7 +147,7 @@ static ANSC_STATUS EthLink_Initialize( ANSC_HANDLE hThisObject)
         return ANSC_STATUS_FAILURE;
     }
 
-    memset(pEthCfg, 0, sizeof(pEthCfg));
+    memset(pEthCfg, 0, sizeof(DML_ETHERNET));
 
     for(nIndex = 0; nIndex < linkCount; nIndex++)
     {

@@ -80,7 +80,6 @@ VlanCreate
         VOID
     )
 {
-    ANSC_STATUS                 returnStatus = ANSC_STATUS_SUCCESS;
     PDATAMODEL_VLAN             pMyObject    = (PDATAMODEL_VLAN)NULL;
 
     /*
@@ -197,7 +196,7 @@ static ANSC_STATUS VlanTerminationInitialize( ANSC_HANDLE hThisObject)
         }
 
         PDML_VLAN pVlan = (PDML_VLAN)AnscAllocateMemory(sizeof(DML_VLAN)* pMyObject->ulVlantrInstanceNumber);
-        memset(pVlan, 0, sizeof(pVlan));
+        memset(pVlan, 0, sizeof(DML_VLAN));
 
         for(nIndex = 0; nIndex < pMyObject->ulVlantrInstanceNumber; nIndex++)
         {
@@ -313,7 +312,7 @@ static ANSC_STATUS VlanTerminationInitialize( ANSC_HANDLE hThisObject)
     pMyObject->ulVlantrInstanceNumber = vlanCount ;
 
     PDML_VLAN pVlan = (PDML_VLAN)AnscAllocateMemory(sizeof(DML_VLAN)* vlanCount);
-    memset(pVlan, 0, sizeof(pVlan));
+    memset(pVlan, 0, sizeof(DML_VLAN));
 
     for(nIndex = 0; nIndex < vlanCount; nIndex++)
     {
