@@ -118,9 +118,6 @@ void get_uptime(long *uptime)
 #if !defined(VLAN_MANAGER_HAL_ENABLED)
 static ANSC_STATUS Vlan_DeleteInterface(PDML_VLAN p_Vlan)
 {
-     char wan_interface[10] = {0};
-     char buff[10] =  {0};
-
      if (NULL == p_Vlan)
      {
           CcspTraceError(("Error: Invalid arguement \n"));
@@ -228,8 +225,7 @@ static ANSC_STATUS Vlan_SetEthLink(PDML_VLAN pEntry, BOOL enable, BOOL PriTag)
     CcspTraceInfo(("%s-%d: iEthLinkInstance=%d \n",__FUNCTION__, __LINE__, iEthLinkInstance));
     if (iEthLinkInstance > 0)
     {
-        char acTableName[128] = {0};
-        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), &EthLinkInstance);
+        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), (PULONG)&EthLinkInstance);
         if (pNewEntry == NULL)
         {
            CcspTraceError(("%s Failed to add table \n", __FUNCTION__));
@@ -347,7 +343,6 @@ void mapt_ivi_check() {
 
 void * Vlan_Disable(void *Arg)
 {
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     int ret;
     vlan_link_status_e status;
 
@@ -429,8 +424,7 @@ static ANSC_STATUS Vlan_GetEthLinkMacOffSet(PDML_VLAN pEntry, ULONG* pOffSet)
     CcspTraceInfo(("%s-%d: iEthLinkInstance=%d \n",__FUNCTION__, __LINE__, iEthLinkInstance));
     if (iEthLinkInstance > 0)
     {
-        char acTableName[128] = {0};
-        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), &EthLinkInstance);
+        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), (PULONG)&EthLinkInstance);
         if (pNewEntry == NULL)
         {
            CcspTraceError(("%s Failed to add table \n", __FUNCTION__));
@@ -479,7 +473,7 @@ static ANSC_STATUS Vlan_SetMacAddr( PDML_VLAN pEntry )
     acTmpReturnValue[j] = '\0';
     sscanf(acTmpReturnValue, "%64llx", &number);
 
-    if (Vlan_GetEthLinkMacOffSet(pEntry, &add) == ANSC_STATUS_FAILURE)
+    if (Vlan_GetEthLinkMacOffSet(pEntry, (PULONG)&add) == ANSC_STATUS_FAILURE)
     {
         CcspTraceError(("%s - Failed to set Enable data model\n", __FUNCTION__));
         return ANSC_STATUS_FAILURE;
