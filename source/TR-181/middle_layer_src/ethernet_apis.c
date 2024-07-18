@@ -1124,6 +1124,7 @@ static ANSC_STATUS EthLink_GetVlanIdAndTPId(const PDML_ETHERNET pEntry, INT *pVl
 
 ANSC_STATUS EthLink_GetMacAddr( PDML_ETHERNET pEntry )
 {
+    unsigned long long int number, new_mac;
     char acTmpReturnValue[256] = {0};
     char hex[32];
     char buff[2] = {0};
@@ -1153,17 +1154,10 @@ ANSC_STATUS EthLink_GetMacAddr( PDML_ETHERNET pEntry )
     }
 
     acTmpReturnValue[j] = '\0';
-    for (int k=0;k<12;k++)
-    {
-        c = acTmpReturnValue[k];
-        buff[0] = c;
-        arr[k] = strtol(buff,NULL,16);
-    }
+    sscanf(acTmpReturnValue, "%64llx", &number);
 
-    arr[11] = arr[11] + pEntry->MACAddrOffSet;
-
-    snprintf(hex, sizeof(hex), "%x%x%x%x%x%x%x%x%x%x%x%x", 
-            arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9], arr[10], arr[11]);
+    new_mac = number + pEntry->MACAddrOffSet;
+    snprintf(hex, sizeof(hex), "%08llx", new_mac);
 
     snprintf(macStr, sizeof(macStr), "%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
             hex[0], hex[1], hex[2], hex[3], hex[4], hex[5], hex[6], hex[7], hex[8], hex[9], hex[10], hex[11]);
@@ -1171,7 +1165,7 @@ ANSC_STATUS EthLink_GetMacAddr( PDML_ETHERNET pEntry )
     strncpy(pEntry->MACAddress, macStr, sizeof(pEntry->MACAddress) - 1);
 
     return ANSC_STATUS_SUCCESS;
-        }
+}
 
 #if defined(COMCAST_VLAN_HAL_ENABLED)
 static ANSC_STATUS EthLink_CreateBridgeInterface(BOOL isAutoWanMode)
