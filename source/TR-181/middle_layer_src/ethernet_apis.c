@@ -1127,9 +1127,6 @@ ANSC_STATUS EthLink_GetMacAddr( PDML_ETHERNET pEntry )
     unsigned long long int number, new_mac;
     char acTmpReturnValue[256] = {0};
     char hex[32];
-    char buff[2] = {0};
-    char arr[12] = {0};
-    char c;
     char macStr[32];
     int i, j = 0;
 
