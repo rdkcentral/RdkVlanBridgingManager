@@ -39,6 +39,7 @@
 #include "poam_irepfo_interface.h"
 #include "sys_definitions.h"
 #include "ccsp_psm_helper.h"
+#include "platform_hal.h"
 
 /*TODO
  *Need to be Reviewed after Unification is finalised.
