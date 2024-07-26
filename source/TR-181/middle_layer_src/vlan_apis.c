@@ -61,6 +61,7 @@
 extern int sysevent_fd;
 extern token_t sysevent_token;
 #endif
+static pthread_mutex_t vlan_access_mutex;
 
 static ANSC_STATUS Vlan_CreateTaggedInterface(PDML_VLAN pEntry);
 static ANSC_STATUS Vlan_SetEthLink(PDML_VLAN pEntry, BOOL enable, BOOL PriTag);
@@ -360,6 +361,7 @@ void * Vlan_Disable(void *Arg)
 
     pthread_detach(pthread_self());
 
+    pthread_mutex_lock(&vlan_access_mutex);
     //Set EthLink to False. it will take care UnTagged Created Vlan Interface
     if (Vlan_SetEthLink(pEntry, FALSE, FALSE) == ANSC_STATUS_FAILURE)
     {
@@ -405,6 +407,7 @@ void * Vlan_Disable(void *Arg)
     EthLink_SendVirtualIfaceVlanStatus(pEntry->Path, "Down");
     CcspTraceInfo(("%s - %s:Successfully deleted VLAN interface %s\n", __FUNCTION__, VLAN_MARKER_VLAN_IF_CREATE, pEntry->Name));
 
+    pthread_mutex_unlock(&vlan_access_mutex);
     pthread_exit(NULL);
 
 }
@@ -596,6 +599,7 @@ void * Vlan_Enable(void *Arg)
 
     pthread_detach(pthread_self());
 
+    pthread_mutex_lock(&vlan_access_mutex);
     //Create Vlan Tagged Interface
     if(pEntry->VLANId > 0) {
         if (Vlan_SetEthLink(pEntry, TRUE, TRUE) == ANSC_STATUS_FAILURE)
@@ -659,6 +663,19 @@ void * Vlan_Enable(void *Arg)
     }
     pEntry->Status = VLAN_IF_UP;
 
+    pthread_mutex_unlock(&vlan_access_mutex);
     pthread_exit(NULL);
 
+}
+void VLAN_InitMutex()
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&vlan_access_mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
+}
+void VLAN_DelMutex()
+{
+    pthread_mutex_destroy(&vlan_access_mutex);
 }
