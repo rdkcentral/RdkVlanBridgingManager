@@ -124,6 +124,8 @@ Vlan_GetStatus
 
 void * Vlan_Enable(void *Arg);
 void * Vlan_Disable(void *Arg);
+void VLAN_InitMutex();
+void VLAN_DelMutex();
 
 void get_uptime(long *uptime);
 #endif
