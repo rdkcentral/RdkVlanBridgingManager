@@ -83,7 +83,7 @@
 #define CHECK(expr)                                                \
     if (!(expr))                                                   \
     {                                                              \
-        CcspTraceError(("%s - %d Invalid parameter error \n!!!")); \
+        CcspTraceError(("%s - %d Invalid parameter error \n!!!", __FUNCTION__, __LINE__)); \
         return RETURN_ERR;                                         \
     }
 
@@ -140,7 +140,6 @@ INT vlan_eth_hal_init()
 /* vlan_eth_hal_createInterface() */
 int vlan_eth_hal_createInterface(vlan_configuration_t *config)
 {
-    int rc = RETURN_OK;
     json_object *jmsg = NULL;
     json_object *jreply_msg = NULL;
     json_bool status = FALSE;
@@ -208,18 +207,15 @@ int vlan_eth_hal_createInterface(vlan_configuration_t *config)
         if (status)
         {
             CcspTraceInfo(("%s - %d Set request is successful ", __FUNCTION__, __LINE__));
-            rc = RETURN_OK;
         }
         else
         {
             CcspTraceError(("%s - %d - Set request is failed \n", __FUNCTION__, __LINE__));
-            rc = RETURN_ERR;
         }
     }
     else
     {
         CcspTraceError(("%s - %d Failed to get result status from json response, something wrong happened!!! \n", __FUNCTION__, __LINE__));
-        rc = RETURN_ERR;
     }
 
     // Free json objects.
@@ -232,7 +228,6 @@ int vlan_eth_hal_createInterface(vlan_configuration_t *config)
 /* vlan_eth_hal_setMarkings() */
 int vlan_eth_hal_setMarkings(vlan_configuration_t *config)
 {
-    int rc = RETURN_OK;
     json_object *jmsg = NULL;
     json_object *jreply_msg = NULL;
     json_bool status = FALSE;
@@ -300,18 +295,15 @@ int vlan_eth_hal_setMarkings(vlan_configuration_t *config)
         if (status)
         {
             CcspTraceInfo(("%s - %d Set request is successful ", __FUNCTION__, __LINE__));
-            rc = RETURN_OK;
         }
         else
         {
             CcspTraceError(("%s - %d - Set request is failed \n", __FUNCTION__, __LINE__));
-            rc = RETURN_ERR;
         }
     }
     else
     {
         CcspTraceError(("%s - %d Failed to get result status from json response, something wrong happened!!! \n", __FUNCTION__, __LINE__));
-        rc = RETURN_ERR;
     }
 
     // Free json objects.
@@ -324,7 +316,6 @@ int vlan_eth_hal_setMarkings(vlan_configuration_t *config)
 /* vlan_eth_hal_deleteInterface() */
 int vlan_eth_hal_deleteInterface(char *ifname, int instanceNumber)
 {
-    int rc = RETURN_OK;
     json_object *jmsg = NULL;
     json_object *jreply_msg = NULL;
     json_bool status = FALSE;
@@ -367,18 +358,15 @@ int vlan_eth_hal_deleteInterface(char *ifname, int instanceNumber)
         if (status)
         {
             CcspTraceInfo(("%s - %d Delete request for [%s] is successful \n", __FUNCTION__, __LINE__, ifname));
-            rc = RETURN_OK;
         }
         else
         {
             CcspTraceError(("%s - %d - Delete request for [%s] is failed \n", __FUNCTION__, __LINE__, ifname));
-            rc = RETURN_ERR;
         }
     }
     else
     {
         CcspTraceError(("%s - %d Failed to get result status from json response, something wrong happened!!! \n", __FUNCTION__, __LINE__));
-        rc = RETURN_ERR;
     }
 
     // Free json objects.
