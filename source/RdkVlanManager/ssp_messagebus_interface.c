@@ -113,7 +113,7 @@ ssp_Mbi_MessageBusEngage
                 component_id,
                 config_file,
                 &bus_handle,
-                Ansc_AllocateMemory_Callback,           /* mallocfc, use default */
+                (CCSP_MESSAGE_BUS_MALLOC)Ansc_AllocateMemory_Callback,           /* mallocfc, use default */
                 Ansc_FreeMemory_Callback                /* freefc,   use default */
             );
 
