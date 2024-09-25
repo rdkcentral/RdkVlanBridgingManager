@@ -58,6 +58,7 @@
 #include "ssp_global.h"
 #include "stdlib.h"
 #include "ccsp_dm_api.h"
+#include "vlan_apis.h"
 
 #define DEBUG_INI_NAME "/etc/debug.ini"
 
@@ -261,6 +262,7 @@ int main(int argc, char* argv[])
 
     //rdklogger init
     rdk_logger_init(DEBUG_INI_NAME);
+    VLAN_InitMutex();
 
     if ( bRunAsDaemon ) 
     {    
@@ -349,6 +351,7 @@ int main(int argc, char* argv[])
 
 	ssp_cancel();
 
+    VLAN_DelMutex();
     return 0;
 }
 
