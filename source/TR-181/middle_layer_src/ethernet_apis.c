@@ -176,6 +176,7 @@ EthLink_Init
     // Initialize sysevent
     if ( EthLink_SyseventInit( ) < 0 )
     {
+        CcspTraceError(("%s - %d : SysEvent Initialisation failed\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -417,6 +418,12 @@ ANSC_STATUS DmlEthGetParamValues(
     char *pParamName,
     char *pReturnVal)
 {
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pReturnVal))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameters\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
     parameterValStruct_t **retVal = NULL;
     char *ParamName[1];
     int ret = 0,
@@ -455,6 +462,7 @@ ANSC_STATUS DmlEthGetParamValues(
         free_parameterValStruct_t(bus_handle, nval, retVal);
     }
 
+    CcspTraceError(("%s %d - Failed to get Eth Parameter values\n", __FUNCTION__, __LINE__));
     return ANSC_STATUS_FAILURE;
 }
 
@@ -467,6 +475,12 @@ static ANSC_STATUS DmlEthSetParamValues(
     enum dataType_e type,
     unsigned int bCommitFlag)
 {
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pParamVal))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameter\n", __FUNCTION__, __LINE__));
+	return ANSC_STATUS_FAILURE;
+    }
+
     CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)g_MessageBusHandle;
     parameterValStruct_t param_val[1] = {0};
     char *faultParam = NULL;
@@ -505,6 +519,12 @@ static ANSC_STATUS DmlEthGetParamNames(
     char a2cReturnVal[][256],
     int *pReturnSize)
 {
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pReturnSize))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameters\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
     parameterInfoStruct_t **retInfo = NULL;
     int ret = 0,
         nval;
@@ -545,6 +565,7 @@ static ANSC_STATUS DmlEthGetParamNames(
         free_parameterInfoStruct_t(bus_handle, nval, retInfo);
     }
 
+    CcspTraceError(("%s %d - Failed to get Eth Parameter Names\n", __FUNCTION__, __LINE__));
     return ANSC_STATUS_FAILURE;
 }
 
@@ -674,6 +695,7 @@ static ANSC_STATUS EthLink_AddMarking(PDML_ETHERNET pEntry)
 
         if( NULL == VlanCfg.skb_config )
         {
+            CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
             return ANSC_STATUS_FAILURE;
         }
 
@@ -1002,7 +1024,7 @@ static ANSC_STATUS EthLink_CreateMarkingTable( PDML_ETHERNET pEntry, vlan_config
         }
     }
 
-    CcspTraceError(("%s : Successfully Created EthLinkTable\n", __FUNCTION__));
+    CcspTraceInfo(("%s : Successfully Created EthLinkTable\n", __FUNCTION__));
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -1039,13 +1061,17 @@ static ANSC_STATUS EthLink_GetUnTaggedVlanInterfaceStatus(const char *iface, eth
     int flag = FALSE;
     struct ifreq intf;
 
-    if(iface == NULL) {
+    if(iface == NULL)
+    {
         *status = ETH_IF_NOTPRESENT;
+        CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
-    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
         *status = ETH_IF_ERROR;
+        CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -1341,7 +1367,10 @@ static ANSC_STATUS EthLink_CreateBridgeInterface(BOOL isAutoWanMode)
 static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
 {
     if (!pCfg)
+    {
+        CcspTraceError(("%s - %d : Invalid input argument \n", __FUNCTION__, __LINE__));
         return -1;
+    }
 
     if (pCfg->ethWanEnabled == TRUE)
     {
@@ -1448,7 +1477,10 @@ static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
 static INT EthLink_Hal_BridgeConfigBcm(WAN_MODE_BRIDGECFG *pCfg)
 {
     if (!pCfg)
+    {
+        CcspTraceError(("%s - %d : Invalid input arguement\n", __FUNCTION__, __LINE__));
         return -1;
+    }
 
     if (pCfg->ethWanEnabled == TRUE)
     {

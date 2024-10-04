@@ -180,7 +180,7 @@ EthLink_GetEntry
     {
         pEthlink = &(pMyObject->EthLink[nIndex]);
         *pInsNumber = pEthlink->InstanceNumber;
-         return pEthlink;
+        return pEthlink;
     }
 
     return NULL;
@@ -527,7 +527,7 @@ EthLink_SetParamBoolValue
                 iErrorCode = pthread_create( &VlanThreadId, NULL, &EthLink_RefreshHandleThread, (void *)p_EthLink );
                 if( 0 != iErrorCode )
                 {
-                    CcspTraceInfo(("%s %d - Failed to Start VLAN Refresh thread EC:%d\n", __FUNCTION__, __LINE__, iErrorCode ));
+                    CcspTraceError(("%s %d - Failed to Start VLAN Refresh thread EC:%d\n", __FUNCTION__, __LINE__, iErrorCode ));
                     return FALSE;
                 }
             }

@@ -130,7 +130,7 @@ INT vlan_eth_hal_init()
     }
 
     if (is_client_connected != TRUE) {
-         CcspTraceInfo(("Failed to connect to the hal server. \n"));
+         CcspTraceError(("Failed to connect to the hal server. \n"));
          return RETURN_ERR;
     }
 
