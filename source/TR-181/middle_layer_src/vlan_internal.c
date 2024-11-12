@@ -425,12 +425,14 @@ VlanInitialize
     returnStatus = Vlan_Init();
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {
+        CcspTraceError(("%s %d - Vlan Initialisation Failed\n", __FUNCTION__, __LINE__));
         return returnStatus;
     }
 
     returnStatus = VlanTerminationInitialize( pMyObject );
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {
+        CcspTraceError(("%s %d - Vlan Termination Initialise Failed\n", __FUNCTION__, __LINE__));
         return returnStatus;
     }
 
