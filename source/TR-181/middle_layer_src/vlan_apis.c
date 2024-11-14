@@ -78,13 +78,17 @@ static ANSC_STATUS Vlan_GetTaggedVlanInterfaceStatus(const char *iface, vlan_lin
     int flag = FALSE;
     struct ifreq intf;
 
-    if(iface == NULL) {
+    if(iface == NULL)
+    {
        *status = VLAN_IF_NOTPRESENT;
+       CcspTraceError(("%s - %d : Invalid Interface\n", __FUNCTION__, __LINE__));
        return ANSC_STATUS_FAILURE;
     }
 
-    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
         *status = VLAN_IF_ERROR;
+        CcspTraceError(("%s - %d : Socket creation Failed\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -458,6 +462,12 @@ static ANSC_STATUS Vlan_SetMacAddr( PDML_VLAN pEntry )
     int add = 0;
 
 
+    if(NULL == pEntry)
+    {
+        CcspTraceInfo(("[%s][%d] Failed to set Mac Address\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
     if(0 != platform_hal_GetBaseMacAddress(acTmpReturnValue))
     {
         CcspTraceError(("[%s][%d]Failed to get BaseMacAddress from HAL API\n", __FUNCTION__, __LINE__));
@@ -586,7 +596,7 @@ void * Vlan_Enable(void *Arg)
     PDML_VLAN pEntry = (PDML_VLAN)Arg;
     if ( NULL == pEntry )
     {
-        CcspTraceError(("%s-%d: Failed, pEntry Arument is Null\n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s-%d: Failed, pEntry Argument is Null\n", __FUNCTION__, __LINE__));
         pthread_exit(NULL);
     }
 

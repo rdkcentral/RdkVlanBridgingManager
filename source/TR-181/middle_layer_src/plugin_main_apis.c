@@ -203,19 +203,19 @@ BackEndManagerInitialize
     pMyObject->hVLAN = (ANSC_HANDLE)VlanCreate();
     if (pMyObject->hVLAN == NULL)
     {
-        AnscTraceWarning(("  VlanCreate Failed!\n"));
+        AnscTraceError(("  VlanCreate Failed!\n"));
         return ANSC_STATUS_FAILURE;
     }
-    AnscTraceWarning(("  VlanCreate done!\n"));
+    AnscTraceInfo(("  VlanCreate done!\n"));
 
     pMyObject->hEth = NULL;
     pMyObject->hEth = (ANSC_HANDLE)EthernetCreate();
     if (pMyObject->hEth == NULL)
     {
-        AnscTraceWarning(("  EthernetCreate Failed!\n"));
+        AnscTraceError(("  EthernetCreate Failed!\n"));
         return ANSC_STATUS_FAILURE;
     }
-    AnscTraceWarning(("  EthernetCreate done!\n"));
+    AnscTraceInfo(("  EthernetCreate done!\n"));
 	
     return returnStatus;
 }
