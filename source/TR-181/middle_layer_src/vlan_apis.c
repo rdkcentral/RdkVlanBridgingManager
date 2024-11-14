@@ -461,15 +461,17 @@ static ANSC_STATUS Vlan_SetMacAddr( PDML_VLAN pEntry )
     int i, j = 0;
     int add = 0;
 
+
     if(NULL == pEntry)
     {
         CcspTraceInfo(("[%s][%d] Failed to set Mac Address\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
-    if(ANSC_STATUS_FAILURE == DmlEthGetParamValues(RDKB_PAM_COMPONENT_NAME, RDKB_PAM_DBUS_PATH, PAM_BASE_MAC_ADDRESS, acTmpReturnValue))
+    if(0 != platform_hal_GetBaseMacAddress(acTmpReturnValue))
     {
-        CcspTraceError(("[%s][%d]Failed to get param value\n", __FUNCTION__, __LINE__));
+        CcspTraceError(("[%s][%d]Failed to get BaseMacAddress from HAL API\n", __FUNCTION__, __LINE__));
+
         return ANSC_STATUS_FAILURE;
     }
 
