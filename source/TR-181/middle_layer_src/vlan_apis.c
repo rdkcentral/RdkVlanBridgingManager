@@ -54,7 +54,6 @@
 #define SYSEVENT_WAN_IFACE_NAME "wan_ifname"
 #define BUFLEN_64 64
 
-#define PARAM_SIZE 10
 #define PARAM_SIZE_32 32
 #define PARAM_SIZE_64 64
 
@@ -80,13 +79,17 @@ static ANSC_STATUS Vlan_GetTaggedVlanInterfaceStatus(const char *iface, vlan_lin
     int flag = FALSE;
     struct ifreq intf;
 
-    if(iface == NULL) {
+    if(iface == NULL)
+    {
        *status = VLAN_IF_NOTPRESENT;
+       CcspTraceError(("%s - %d : Invalid Interface\n", __FUNCTION__, __LINE__));
        return ANSC_STATUS_FAILURE;
     }
 
-    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
         *status = VLAN_IF_ERROR;
+        CcspTraceError(("%s - %d : Socket creation Failed\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -119,9 +122,6 @@ void get_uptime(long *uptime)
 #if !defined(VLAN_MANAGER_HAL_ENABLED)
 static ANSC_STATUS Vlan_DeleteInterface(PDML_VLAN p_Vlan)
 {
-     char wan_interface[10] = {0};
-     char buff[10] =  {0};
-
      if (NULL == p_Vlan)
      {
           CcspTraceError(("Error: Invalid arguement \n"));
@@ -157,7 +157,7 @@ ANSC_STATUS Vlan_Init( void )
     ANSC_STATUS  returnStatus = ANSC_STATUS_SUCCESS;
 
 #if defined(VLAN_MANAGER_HAL_ENABLED)
-    returnStatus != vlan_eth_hal_init();
+    returnStatus = vlan_eth_hal_init();
     if (returnStatus != ANSC_STATUS_SUCCESS) {
         CcspTraceError(("%s-%d: vlan_eth_hal_init failed\n", __FUNCTION__, __LINE__));
     }
@@ -229,8 +229,7 @@ static ANSC_STATUS Vlan_SetEthLink(PDML_VLAN pEntry, BOOL enable, BOOL PriTag)
     CcspTraceInfo(("%s-%d: iEthLinkInstance=%d \n",__FUNCTION__, __LINE__, iEthLinkInstance));
     if (iEthLinkInstance > 0)
     {
-        char acTableName[128] = {0};
-        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), &EthLinkInstance);
+        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), (PULONG)&EthLinkInstance);
         if (pNewEntry == NULL)
         {
            CcspTraceError(("%s Failed to add table \n", __FUNCTION__));
@@ -335,8 +334,8 @@ void mapt_ivi_check() {
     else {
         if( fgets (line, 64, file)!=NULL ) {
             if( strstr(line, "ivi")) {
-                system("ivictl -q");
-                system("rmmod -f /lib/modules/`uname -r`/extra/ivi.ko");
+                v_secure_system("ivictl -q");
+                v_secure_system("rmmod -f /lib/modules/`uname -r`/extra/ivi.ko");
                 sleep(1);
                 CcspTraceInfo(("%s - ivi.ko removed\n", __FUNCTION__));
             }
@@ -348,7 +347,6 @@ void mapt_ivi_check() {
 
 void * Vlan_Disable(void *Arg)
 {
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     int ret;
     vlan_link_status_e status;
 
@@ -389,6 +387,7 @@ void * Vlan_Disable(void *Arg)
 #if defined(VLAN_MANAGER_HAL_ENABLED)
         if ( ( status != VLAN_IF_NOTPRESENT ) && ( status != VLAN_IF_ERROR ) )
         {
+	    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
             returnStatus = vlan_eth_hal_deleteInterface(pEntry->Name, pEntry->InstanceNumber);
             if ( ANSC_STATUS_SUCCESS != returnStatus )
             {
@@ -432,8 +431,7 @@ static ANSC_STATUS Vlan_GetEthLinkMacOffSet(PDML_VLAN pEntry, ULONG* pOffSet)
     CcspTraceInfo(("%s-%d: iEthLinkInstance=%d \n",__FUNCTION__, __LINE__, iEthLinkInstance));
     if (iEthLinkInstance > 0)
     {
-        char acTableName[128] = {0};
-        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), &EthLinkInstance);
+        pNewEntry = EthLink_GetEntry(NULL, (iEthLinkInstance - 1), (PULONG)&EthLinkInstance);
         if (pNewEntry == NULL)
         {
            CcspTraceError(("%s Failed to add table \n", __FUNCTION__));
@@ -466,9 +464,17 @@ static ANSC_STATUS Vlan_SetMacAddr( PDML_VLAN pEntry )
     int i, j = 0;
     int add = 0;
 
-    if(ANSC_STATUS_FAILURE == DmlEthGetParamValues(RDKB_PAM_COMPONENT_NAME, RDKB_PAM_DBUS_PATH, PAM_BASE_MAC_ADDRESS, acTmpReturnValue))
+
+    if(NULL == pEntry)
     {
-        CcspTraceError(("[%s][%d]Failed to get param value\n", __FUNCTION__, __LINE__));
+        CcspTraceInfo(("[%s][%d] Failed to set Mac Address\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
+    if(0 != platform_hal_GetBaseMacAddress(acTmpReturnValue))
+    {
+        CcspTraceError(("[%s][%d]Failed to get BaseMacAddress from HAL API\n", __FUNCTION__, __LINE__));
+
         return ANSC_STATUS_FAILURE;
     }
 
@@ -482,7 +488,7 @@ static ANSC_STATUS Vlan_SetMacAddr( PDML_VLAN pEntry )
     acTmpReturnValue[j] = '\0';
     sscanf(acTmpReturnValue, "%64llx", &number);
 
-    if (Vlan_GetEthLinkMacOffSet(pEntry, &add) == ANSC_STATUS_FAILURE)
+    if (Vlan_GetEthLinkMacOffSet(pEntry, (PULONG)&add) == ANSC_STATUS_FAILURE)
     {
         CcspTraceError(("%s - Failed to set Enable data model\n", __FUNCTION__));
         return ANSC_STATUS_FAILURE;
@@ -593,7 +599,7 @@ void * Vlan_Enable(void *Arg)
     PDML_VLAN pEntry = (PDML_VLAN)Arg;
     if ( NULL == pEntry )
     {
-        CcspTraceError(("%s-%d: Failed, pEntry Arument is Null\n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s-%d: Failed, pEntry Argument is Null\n", __FUNCTION__, __LINE__));
         pthread_exit(NULL);
     }
 

@@ -48,10 +48,10 @@
 #include "vlan_internal.h"
 #include "vlan_dml.h"
 #include "vlan_eth_hal.h"
-#if defined(COMCAST_VLAN_HAL_ENABLED)
-#include "ccsp_hal_ethsw.h"
 #include "secure_wrapper.h"
 #include "ccsp_psm_helper.h"
+#if defined(COMCAST_VLAN_HAL_ENABLED)
+#include "ccsp_hal_ethsw.h"
 #include <platform_hal.h>
 #endif //COMCAST_VLAN_HAL_ENABLED
 
@@ -96,7 +96,7 @@ extern ANSC_HANDLE                        g_MessageBusHandle;
         int                               sysevent_fd = -1;
         token_t                           sysevent_token;
 
-static ANSC_STATUS DmlEthSetParamValues(const char *pComponent, const char *pBus, const char *pParamName, const char *pParamVal, enum dataType_e type, unsigned int bCommitFlag);
+static ANSC_STATUS DmlEthSetParamValues(const char *pComponent, char *pBus, char *pParamName, char *pParamVal, enum dataType_e type, unsigned int bCommitFlag);
 static ANSC_STATUS DmlEthGetParamNames(char *pComponent, char *pBus, char *pParamName, char a2cReturnVal[][256], int *pReturnSize);
 static int EthLink_SyseventInit( void );
 
@@ -109,7 +109,6 @@ static ANSC_STATUS EthLink_CreateUnTaggedInterface(PDML_ETHERNET pEntry);
 /*TODO
 * Need to be Reviewed after Unification finalised.
 */
-static ANSC_STATUS EthLink_GetLowerLayersInstanceFromEthAgent(char *ifname, INT *piInstanceNumber);
 static ANSC_STATUS EthLink_CreateMarkingTable(PDML_ETHERNET pEntry, vlan_configuration_t* pVlanCfg);
 static ANSC_STATUS EthLink_AddMarking(PDML_ETHERNET pEntry);
 static ANSC_STATUS EthLink_TriggerVlanRefresh(PDML_ETHERNET pEntry );
@@ -177,6 +176,7 @@ EthLink_Init
     // Initialize sysevent
     if ( EthLink_SyseventInit( ) < 0 )
     {
+        CcspTraceError(("%s - %d : SysEvent Initialisation failed\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -418,7 +418,12 @@ ANSC_STATUS DmlEthGetParamValues(
     char *pParamName,
     char *pReturnVal)
 {
-    CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pReturnVal))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameters\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
     parameterValStruct_t **retVal = NULL;
     char *ParamName[1];
     int ret = 0,
@@ -457,18 +462,25 @@ ANSC_STATUS DmlEthGetParamValues(
         free_parameterValStruct_t(bus_handle, nval, retVal);
     }
 
+    CcspTraceError(("%s %d - Failed to get Eth Parameter values\n", __FUNCTION__, __LINE__));
     return ANSC_STATUS_FAILURE;
 }
 
 /* * DmlEthSetParamValues() */
 static ANSC_STATUS DmlEthSetParamValues(
     const char *pComponent,
-    const char *pBus,
-    const char *pParamName,
-    const char *pParamVal,
+    char *pBus,
+    char *pParamName,
+    char *pParamVal,
     enum dataType_e type,
     unsigned int bCommitFlag)
 {
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pParamVal))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameter\n", __FUNCTION__, __LINE__));
+	return ANSC_STATUS_FAILURE;
+    }
+
     CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)g_MessageBusHandle;
     parameterValStruct_t param_val[1] = {0};
     char *faultParam = NULL;
@@ -507,9 +519,13 @@ static ANSC_STATUS DmlEthGetParamNames(
     char a2cReturnVal[][256],
     int *pReturnSize)
 {
-    CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
+    if((NULL == pComponent) || (NULL == pBus) || (NULL == pParamName) || (NULL == pReturnSize))
+    {
+        CcspTraceError(("%s - %d : Null valued input parameters\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
     parameterInfoStruct_t **retInfo = NULL;
-    char *ParamName[1];
     int ret = 0,
         nval;
 
@@ -549,51 +565,8 @@ static ANSC_STATUS DmlEthGetParamNames(
         free_parameterInfoStruct_t(bus_handle, nval, retInfo);
     }
 
+    CcspTraceError(("%s %d - Failed to get Eth Parameter Names\n", __FUNCTION__, __LINE__));
     return ANSC_STATUS_FAILURE;
-}
-
-/*TODO
- * Need to be Reviewed after Unification is finalised.
- */
-static ANSC_STATUS EthLink_GetLowerLayersInstanceFromEthAgent(
-    char *ifname,
-    INT *piInstanceNumber)
-{
-    char acTmpReturnValue[256] = {0};
-    INT iLoopCount,
-        iTotalNoofEntries;
-    if (ANSC_STATUS_FAILURE == DmlEthGetParamValues(ETH_COMPONENT_NAME, ETH_DBUS_PATH, ETH_NOE_PARAM_NAME, acTmpReturnValue))
-    {
-        CcspTraceError(("[%s][%d]Failed to get param value\n", __FUNCTION__, __LINE__));
-        return ANSC_STATUS_FAILURE;
-    }
-    //Total count
-    iTotalNoofEntries = atoi(acTmpReturnValue);
-    
-    CcspTraceInfo(("[%s][%d]TotalNoofEntries:%d\n", __FUNCTION__, __LINE__, iTotalNoofEntries));
-    if ( 0 >= iTotalNoofEntries )
-    {
-        return ANSC_STATUS_SUCCESS;
-    }
-    //Traverse from loop
-    for (iLoopCount = 0; iLoopCount < iTotalNoofEntries; iLoopCount++)
-    {
-        char acTmpQueryParam[256] = {0};
-        snprintf(acTmpQueryParam, sizeof(acTmpQueryParam), ETH_IF_PARAM_NAME, iLoopCount + 1);
-        memset(acTmpReturnValue, 0, sizeof(acTmpReturnValue));
-        if (ANSC_STATUS_FAILURE == DmlEthGetParamValues(ETH_COMPONENT_NAME, ETH_DBUS_PATH, acTmpQueryParam, acTmpReturnValue))
-        {
-            CcspTraceError(("[%s][%d] Failed to get param value\n", __FUNCTION__, __LINE__));
-            continue;
-	}
-
-        if (0 == strcmp(acTmpReturnValue, ifname))
-        {
-            *piInstanceNumber = iLoopCount + 1;
-             break;
-        }
-    }
-    return ANSC_STATUS_SUCCESS;
 }
 
 /*TODO
@@ -610,7 +583,6 @@ static int EthLink_GetActiveWanInterfaces(char *Alias)
     char *endptr                  = NULL;
     int wanIfCount                = 0;
     int activeIface               = -1;
-    int numOfVrIface              = 0;
     int retPsmGet                 = CCSP_SUCCESS;
 
     if (Alias[0] == '\0')
@@ -723,6 +695,7 @@ static ANSC_STATUS EthLink_AddMarking(PDML_ETHERNET pEntry)
 
         if( NULL == VlanCfg.skb_config )
         {
+            CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
             return ANSC_STATUS_FAILURE;
         }
 
@@ -935,7 +908,7 @@ static ANSC_STATUS EthLink_TriggerVlanRefresh(PDML_ETHERNET pEntry )
     strncpy(VlanCfg.L2Interface, pEntry->BaseInterface, sizeof(VlanCfg.L2Interface) - 1);
     VlanCfg.VLANId = 0;
     VlanCfg.TPId   = 0;
-    if (EthLink_GetVlanIdAndTPId(pEntry, &VlanCfg.VLANId, &VlanCfg.TPId) == ANSC_STATUS_FAILURE)
+    if (EthLink_GetVlanIdAndTPId(pEntry, &VlanCfg.VLANId, (PULONG)&VlanCfg.TPId) == ANSC_STATUS_FAILURE)
     {
         CcspTraceError(("%s Failed to Get VLANId and TPId for Interface(%s) \n", __FUNCTION__, pEntry->Alias));
     }
@@ -1051,7 +1024,7 @@ static ANSC_STATUS EthLink_CreateMarkingTable( PDML_ETHERNET pEntry, vlan_config
         }
     }
 
-    CcspTraceError(("%s : Successfully Created EthLinkTable\n", __FUNCTION__));
+    CcspTraceInfo(("%s : Successfully Created EthLinkTable\n", __FUNCTION__));
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -1064,7 +1037,7 @@ static ANSC_STATUS EthLink_SetEgressQoSMap( vlan_configuration_t *pVlanCfg )
     if ((pVlanCfg == NULL) || (pVlanCfg->skb_config == NULL))
     {
         CcspTraceError(("%s-%d: Failed to Set Egress QoS\n",__FUNCTION__, __LINE__));
-        ANSC_STATUS_FAILURE;
+        return ANSC_STATUS_FAILURE;
     }
 
     CcspTraceInfo(("%s-%d: skbMarkingNumOfEntries=%d \n",__FUNCTION__, __LINE__, pVlanCfg->skbMarkingNumOfEntries));
@@ -1088,13 +1061,17 @@ static ANSC_STATUS EthLink_GetUnTaggedVlanInterfaceStatus(const char *iface, eth
     int flag = FALSE;
     struct ifreq intf;
 
-    if(iface == NULL) {
+    if(iface == NULL)
+    {
         *status = ETH_IF_NOTPRESENT;
+        CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
-    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((sfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    {
         *status = ETH_IF_ERROR;
+        CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -1133,11 +1110,11 @@ static ANSC_STATUS EthLink_GetVlanIdAndTPId(const PDML_ETHERNET pEntry, INT *pVl
     VlanCount = Vlan_GetEntryCount(NULL);
     for (int i = 0; i < VlanCount; i++)
     {
-        pNewEntry = Vlan_GetEntry(NULL, i, &VLANInstance);
+        pNewEntry = Vlan_GetEntry(NULL, i, (PULONG)&VLANInstance);
         if (pNewEntry != NULL)
         {
             memset(BaseInterface, 0, sizeof(BaseInterface));
-            if (Vlan_GetParamStringValue(pNewEntry, "X_RDK_BaseInterface", BaseInterface, sizeof(BaseInterface)) == 0)
+            if (Vlan_GetParamStringValue(pNewEntry, "X_RDK_BaseInterface", BaseInterface, (PULONG)sizeof(BaseInterface)) == 0)
             {
                 if( 0 == strncmp(pEntry->BaseInterface, BaseInterface, 3) )
                     break;
@@ -1176,15 +1153,12 @@ ANSC_STATUS EthLink_GetMacAddr( PDML_ETHERNET pEntry )
     unsigned long long int number, new_mac;
     char acTmpReturnValue[256] = {0};
     char hex[32];
-    char buff[2] = {0};
-    char arr[12] = {0};
-    char c;
     char macStr[32];
     int i, j = 0;
 
     if (pEntry->InstanceNumber <= 0)
     {
-        CcspTraceError(("%s-%d: Failed to get Mac Address, EthLinkInstance=%d ", __FUNCTION__, __LINE__, pEntry->InstanceNumber));
+        CcspTraceError(("%s-%d: Failed to get Mac Address, EthLinkInstance=%ld ", __FUNCTION__, __LINE__, pEntry->InstanceNumber));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -1393,7 +1367,10 @@ static ANSC_STATUS EthLink_CreateBridgeInterface(BOOL isAutoWanMode)
 static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
 {
     if (!pCfg)
+    {
+        CcspTraceError(("%s - %d : Invalid input argument \n", __FUNCTION__, __LINE__));
         return -1;
+    }
 
     if (pCfg->ethWanEnabled == TRUE)
     {
@@ -1500,7 +1477,10 @@ static INT EthLink_Hal_BridgeConfigIntelPuma7(WAN_MODE_BRIDGECFG *pCfg)
 static INT EthLink_Hal_BridgeConfigBcm(WAN_MODE_BRIDGECFG *pCfg)
 {
     if (!pCfg)
+    {
+        CcspTraceError(("%s - %d : Invalid input arguement\n", __FUNCTION__, __LINE__));
         return -1;
+    }
 
     if (pCfg->ethWanEnabled == TRUE)
     {
