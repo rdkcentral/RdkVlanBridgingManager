@@ -123,39 +123,9 @@ static INT EthLink_Hal_BridgeConfigBcm(WAN_MODE_BRIDGECFG *pCfg);
 static BOOL EthLink_IsWanEnabled();
 static void EthLink_GetInterfaceMacAddress(macaddr_t* macAddr,char *pIfname);
 static INT EthLink_BridgeNfDisable( const char* bridgeName, bridge_nf_table_t table, BOOL disable );
+static int sysctl_iface_set(const char *path, const char *ifname, const char *content);
 #endif
 /* *************************************************************************************************** */
-
-static int sysctl_iface_set(const char *path, const char *ifname, const char *content)
-{
-    char buf[128];
-    char *filename;
-    size_t len;
-    int fd;
-
-    if (ifname) {
-        snprintf(buf, sizeof(buf), path, ifname);
-        filename = buf;
-    }
-    else
-        filename = path;
-
-    if ((fd = open(filename, O_WRONLY)) < 0) {
-        perror("Failed to open file");
-        return -1;
-    }
-
-    len = strlen(content);
-    if (write(fd, content, len) != (ssize_t) len) {
-        perror("Failed to write to file");
-        close(fd);
-        return -1;
-    }
-
-    close(fd);
-
-    return 0;
-}
 
 /* * EthLink_SyseventInit() */
 static int EthLink_SyseventInit( void )
@@ -1726,5 +1696,35 @@ static INT EthLink_BridgeNfDisable( const char* bridgeName, bridge_nf_table_t ta
     }
 
     return ret;
+}
+static int sysctl_iface_set(const char *path, const char *ifname, const char *content)
+{
+    char buf[128];
+    char *filename;
+    size_t len;
+    int fd;
+
+    if (ifname) {
+        snprintf(buf, sizeof(buf), path, ifname);
+        filename = buf;
+    }
+    else
+        filename = (char *)path;
+
+    if ((fd = open(filename, O_WRONLY)) < 0) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    len = strlen(content);
+    if (write(fd, content, len) != (ssize_t) len) {
+        perror("Failed to write to file");
+        close(fd);
+        return -1;
+    }
+
+    close(fd);
+
+    return 0;
 }
 #endif //COMCAST_VLAN_HAL_ENABLED
