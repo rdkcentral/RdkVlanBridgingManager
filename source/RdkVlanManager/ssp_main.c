@@ -264,6 +264,8 @@ int main(int argc, char* argv[])
     rdk_logger_init(DEBUG_INI_NAME);
     VLAN_InitMutex();
 
+    CcspTraceInfo(("Version : %s \n",GIT_VERSION ));
+
     if ( bRunAsDaemon ) 
     {    
         daemonize();
