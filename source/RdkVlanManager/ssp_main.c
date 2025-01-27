@@ -325,7 +325,7 @@ int main(int argc, char* argv[])
     CcspTraceInfo(("RDKB_SYSTEM_BOOT_UP_LOG : vlanmanager sd_notify Called\n"));
 #endif
 	
-    system("touch /tmp/vlanmanager_initialized");
+    v_secure_system("touch /tmp/vlanmanager_initialized");
 
     if ( bRunAsDaemon )
     {
