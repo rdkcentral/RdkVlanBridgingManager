@@ -58,6 +58,7 @@
 #include "ssp_global.h"
 #include "stdlib.h"
 #include "ccsp_dm_api.h"
+#include "vlan_apis.h"
 
 #define DEBUG_INI_NAME "/etc/debug.ini"
 
@@ -157,13 +158,12 @@ static void _print_stack_backtrace(void)
 }
 
 static void daemonize(void) {
-	int fd;
 	switch (fork()) {
 	case 0:
 		break;
 	case -1:
 		// Error
-		CcspTraceInfo(("Error daemonizing (fork)! %d - %s\n", errno, strerror(
+		CcspTraceError(("Error daemonizing (fork)! %d - %s\n", errno, strerror(
 				errno)));
 		exit(0);
 		break;
@@ -172,7 +172,7 @@ static void daemonize(void) {
 	}
 
 	if (setsid() < 	0) {
-		CcspTraceInfo(("Error demonizing (setsid)! %d - %s\n", errno, strerror(errno)));
+		CcspTraceError(("Error demonizing (setsid)! %d - %s\n", errno, strerror(errno)));
 		exit(0);
 	}
 
@@ -180,7 +180,7 @@ static void daemonize(void) {
 
 
 #ifndef  _DEBUG
-
+	int fd;
 	fd = open("/dev/null", O_RDONLY);
 	if (fd != 0) {
 		dup2(fd, 0);
@@ -237,7 +237,6 @@ void sig_handler(int sig)
 
 int main(int argc, char* argv[])
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
     BOOL                            bRunAsDaemon       = TRUE;
     int                             cmdChar            = 0;
     int                             idx = 0;
@@ -246,7 +245,6 @@ int main(int argc, char* argv[])
 
     char *subSys            = NULL;  
     DmErr_t    err;
-    char buf[8] = {'\0'};
 
     for (idx = 1; idx < argc; idx++)
     {
@@ -264,14 +262,19 @@ int main(int argc, char* argv[])
 
     //rdklogger init
     rdk_logger_init(DEBUG_INI_NAME);
+    VLAN_InitMutex();
+
+    CcspTraceInfo(("Version : %s \n",GIT_VERSION ));
 
     if ( bRunAsDaemon ) 
+    {    
         daemonize();
-	
-	fd = fopen("/var/tmp/vlanmanager.pid", "w+");
+    }
+
+    fd = fopen("/var/tmp/vlanmanager.pid", "w+");
     if ( !fd )
     {
-        CcspTraceWarning(("Create /var/tmp/vlanmanager.pid error. \n"));
+        CcspTraceError(("Create /var/tmp/vlanmanager.pid error. \n"));
         return 1;
     }
     else
@@ -322,7 +325,7 @@ int main(int argc, char* argv[])
     CcspTraceInfo(("RDKB_SYSTEM_BOOT_UP_LOG : vlanmanager sd_notify Called\n"));
 #endif
 	
-    system("touch /tmp/vlanmanager_initialized");
+    v_secure_system("touch /tmp/vlanmanager_initialized");
 
     if ( bRunAsDaemon )
     {
@@ -350,6 +353,7 @@ int main(int argc, char* argv[])
 
 	ssp_cancel();
 
+    VLAN_DelMutex();
     return 0;
 }
 
