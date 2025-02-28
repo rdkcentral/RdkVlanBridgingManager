@@ -790,6 +790,13 @@ ANSC_STATUS EthLink_GetMarking(char *ifname, vlan_configuration_t *pVlanCfg)
                 //allocate memory to vlan_skb_config_t, free it once used.
                 pVlanCfg->skbMarkingNumOfEntries = p_EthLink->NumberofMarkingEntries;
                 pVlanCfg->skb_config = (vlan_skb_config_t*)malloc( p_EthLink->NumberofMarkingEntries * sizeof(vlan_skb_config_t) );
+
+                if( NULL == pVlanCfg->skb_config )
+                {
+                    CcspTraceError(("%s - %d : Invalid SKB priority\n", __FUNCTION__, __LINE__));
+                    return ANSC_STATUS_FAILURE;
+                }
+
                 for(int i = 0; i < p_EthLink->NumberofMarkingEntries; i++)
                 {
                     PCOSA_DML_MARKING pDataModelMarking = (PCOSA_DML_MARKING)&(p_EthLink->pstDataModelMarking[i]);
@@ -806,6 +813,8 @@ ANSC_STATUS EthLink_GetMarking(char *ifname, vlan_configuration_t *pVlanCfg)
                     else
                     {
                         CcspTraceError(("%s-%d: pDataModelMarking Or pVlanCfg->skb_config are Null \n", __FUNCTION__, __LINE__));
+                        free(pVlanCfg->skb_config);
+                        pVlanCfg->skb_config = NULL;
                         return ANSC_STATUS_FAILURE;
                     }
                 }

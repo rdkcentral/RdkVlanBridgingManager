@@ -197,7 +197,12 @@ static ANSC_STATUS VlanTerminationInitialize( ANSC_HANDLE hThisObject)
         }
 
         PDML_VLAN pVlan = (PDML_VLAN)AnscAllocateMemory(sizeof(DML_VLAN)* pMyObject->ulVlantrInstanceNumber);
-        memset(pVlan, 0, sizeof(DML_VLAN));
+        if ( !pVlan )
+        {
+            CcspTraceError(("%s %d - Memory allocation Failed\n", __FUNCTION__, __LINE__));
+            return returnStatus;
+        }
+        memset(pVlan, 0, sizeof(DML_VLAN)* pMyObject->ulVlantrInstanceNumber);
 
         for(nIndex = 0; nIndex < pMyObject->ulVlantrInstanceNumber; nIndex++)
         {
@@ -313,7 +318,13 @@ static ANSC_STATUS VlanTerminationInitialize( ANSC_HANDLE hThisObject)
     pMyObject->ulVlantrInstanceNumber = vlanCount ;
 
     PDML_VLAN pVlan = (PDML_VLAN)AnscAllocateMemory(sizeof(DML_VLAN)* vlanCount);
-    memset(pVlan, 0, sizeof(DML_VLAN));
+    if ( !pVlan )
+    {
+        CcspTraceError(("%s %d - Memory allocation Failed\n", __FUNCTION__, __LINE__));
+        returnStatus = ANSC_STATUS_FAILURE;
+        return returnStatus;
+    }
+    memset(pVlan, 0, sizeof(DML_VLAN)* vlanCount);
 
     for(nIndex = 0; nIndex < vlanCount; nIndex++)
     {
