@@ -107,6 +107,8 @@ ssp_create
 
         if ( !pSsdCcdIf )
         {
+            AnscFreeMemory( g_pComponent_COMMON_vlanmanager);
+            g_pComponent_COMMON_vlanmanager = NULL;
             return ANSC_STATUS_RESOURCES;
         }
         else
@@ -140,6 +142,10 @@ ssp_create
 
         if ( !pDslhLcbIf )
         {
+            AnscFreeMemory(pSsdCcdIf);
+            pSsdCcdIf = NULL;
+            AnscFreeMemory( g_pComponent_COMMON_vlanmanager);
+            g_pComponent_COMMON_vlanmanager = NULL;
             return ANSC_STATUS_RESOURCES;
         }
         else
@@ -160,6 +166,12 @@ ssp_create
     {
         CcspTraceError(("CANNOT Create pDslhCpeController... Exit!\n"));
 
+        AnscFreeMemory(pDslhLcbIf);
+        pDslhLcbIf = NULL;
+        AnscFreeMemory(pSsdCcdIf);
+        pSsdCcdIf = NULL;
+        AnscFreeMemory( g_pComponent_COMMON_vlanmanager);
+        g_pComponent_COMMON_vlanmanager = NULL;
         return ANSC_STATUS_RESOURCES;
     }
 
